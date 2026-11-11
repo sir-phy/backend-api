@@ -1,0 +1,86 @@
+CREATE TABLE IF NOT EXISTS customers (
+  id VARCHAR(32) NOT NULL PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  contact_name VARCHAR(150) NOT NULL,
+  phone VARCHAR(50) NOT NULL,
+  email VARCHAR(150) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS products (
+  id VARCHAR(32) NOT NULL PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  product_code VARCHAR(50) NOT NULL UNIQUE,
+  unit_price DECIMAL(12, 2) NOT NULL,
+  category VARCHAR(80) NOT NULL DEFAULT 'General',
+  stock INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS orders (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  order_number VARCHAR(40) NOT NULL UNIQUE,
+  customer_id VARCHAR(32) NULL,
+  customer_name VARCHAR(150) NOT NULL,
+  order_date VARCHAR(40) NOT NULL,
+  order_time VARCHAR(20) NOT NULL,
+  amount DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+  status ENUM('Pending', 'Confirmed', 'Cancelled') NOT NULL DEFAULT 'Pending',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_orders_status_created (status, created_at),
+  INDEX idx_orders_created (created_at),
+  CONSTRAINT fk_orders_customer
+    FOREIGN KEY (customer_id) REFERENCES customers(id)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS order_items (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  item_key VARCHAR(80) NOT NULL,
+  order_number VARCHAR(40) NOT NULL,
+  product_code VARCHAR(50) NOT NULL,
+  product_name VARCHAR(150) NOT NULL,
+  unit_price DECIMAL(12, 2) NOT NULL,
+  quantity INT NOT NULL DEFAULT 1,
+  discount DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+  subtotal DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+  INDEX idx_order_items_order_number (order_number),
+  CONSTRAINT fk_order_items_order
+    FOREIGN KEY (order_number) REFERENCES orders(order_number)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS order_drafts (
+  order_number VARCHAR(40) NOT NULL PRIMARY KEY,
+  customer_id VARCHAR(32) NULL,
+  customer_json JSON NULL,
+  items_json JSON NOT NULL,
+  saved_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_order_drafts_customer
+    FOREIGN KEY (customer_id) REFERENCES customers(id)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id VARCHAR(40) NOT NULL PRIMARY KEY,
+  title VARCHAR(200) NOT NULL,
+  subtitle VARCHAR(255) NOT NULL,
+  time_ago VARCHAR(40) NOT NULL,
+  is_read BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS user_profiles (
+  id INT NOT NULL PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  role VARCHAR(150) NOT NULL,
+  email VARCHAR(150) NOT NULL,
+  phone VARCHAR(50) NOT NULL,
+  workspace_name VARCHAR(150) NOT NULL,
+  currency VARCHAR(40) NOT NULL DEFAULT 'USD ($)'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
